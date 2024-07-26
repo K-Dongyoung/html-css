@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        div {
+            height: 33vh;
+        }
+
+        h1 {
+            background-color: aquamarine;
+        }
+        div[name=n1] {
+            background-color: lightblue;
+        }
+        div[name=n3] {
+            background-color: lightblue;
+        }
+        div[name=n2], div[name=n4] {
+            background-color: lightgreen;
+        }
+    </style>
 </head>
 <body>
     <h1>홍차</h1>
@@ -23,5 +41,31 @@
             <td>c3</td>
         </tr>
     </table>
+    <hr>
+    <p>
+        절대경로
+        <br>
+        <a href="https://www.naver.com">네이버</a>
+    </p>
+    <hr>
+    <p>
+        상대경로
+        <br>
+        <a href="./hello.html">hello</a>
+    </p>
+    <hr>
+    <p>
+        아이디 경로<br>
+        <a href="#n1">N1</a>
+        <a href="#n2">N2</a>
+        <a href="#n3">N3</a>
+        <a href="#n4">N4</a>
+    </p>
+    <hr>
+    <div name="n1" id="n1">N1</div>
+    <div name="n2" id="n2">N2</div>
+    <div name="n3" id="n3">N3</div>
+    <div name="n4" id="n4">N4</div>
+    
 </body>
 </html>
