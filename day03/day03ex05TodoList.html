@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        .strikethrough {
+            text-decoration: line-through;
+        }
+    </style>
+
+    <script>
+        var todoList = [
+            {seq:101, title:"여행하기", done:false},
+            {seq:102, title:"포트폴리오 만들기", done:true},
+            {seq:103, title:"팀 프로젝트 하기", done:false},
+            {seq:104, title:"엄마 생일 선물 준비하기", done:false},
+        ];
+        var seqCnt = 105;
+
+        window.onload=function() {
+            var memoTxt = document.getElementById('memoTxt');
+            var demo = document.querySelector('#demo');
+            var savekBtn = document.querySelector('#savekBtn');
+            var resetBtn = document.querySelector('#resetBtn');
+            const searchBtn = document.querySelector('#searchBtn');
+            const searchTxt = document.querySelector('#searchTxt');
+            
+            // 검색
+            function searchBtnClick(event) {
+                const filteredList = todoList.filter(function(item) {
+                        return item.title.includes(searchTxt.value);
+                    })
+                drawList(filteredList);
+            }
+            searchBtn.addEventListener('click', searchBtnClick);
+
+            // todoList 표시
+            function drawList(todos) {
+                // todoList 배열의 내용을 목록으로 만든다.
+                // 반복하기 전에 초기화 필수.
+                demo.innerHTML = "";
+                todos.forEach(function(todoObj){
+                    // console.log(todoObj.seq, todoObj.title, todoObj.done);
+                    // 여러줄 문자열 따옴표(``)를 사용하면 템플릿 문자열로 사용 가능.
+                    demo.innerHTML += `<tr align="center" id="row${todoObj.seq}">
+                        <td><input type="checkbox" id="check${todoObj.seq}"></td>
+                        <td>${ todoObj.title }</td>
+                        <td><button id="update${todoObj.seq}">수정</button></td>
+                        <td><button id="delete${todoObj.seq}">삭제</button></td>
+                    </tr>`;
+
+                    if (todoObj.done) {
+                        document.getElementById(`row${todoObj.seq}`).setAttribute("checked", true);
+                    }
+                });
+
+                 
+                 todos.forEach(function(todo) {
+                    // 체크박스 체크 시 가로선
+                    document.getElementById(`check${todo.seq}`).addEventListener('click', function(event) {
+                        todo.done = this.checked;
+                        if (todo.done) {
+                            document.getElementById(`row${todo.seq}`).classList.add('strikethrough');
+                        } else {
+                            document.getElementById(`row${todo.seq}`).classList.remove('strikethrough');
+                        }
+                    });
+                    
+                    // 삭제 버튼에 이벤트 리스너 추가
+                    document.getElementById(`delete${todo.seq}`).addEventListener('click', function(event) {
+                        todoList = todoList.filter(function(item) {
+                            return todo.seq !== item.seq;
+                        })
+                        drawList(todoList);
+                    })
+                    
+                 });
+            }
+            // 함수는 호출 해야 실행 된다.
+            drawList(todoList);
+
+            var handleEvent = function(event) {
+                // todoList에 객체를 추가 한다. push()
+                todoList.push({seq:seqCnt++, title:memoTxt.value, done:false});
+                // 목록을 다시 그린다.
+                drawList(todoList);
+                memoTxt.value = "";
+                memoTxt.focus();
+            }
+            savekBtn.addEventListener('click', handleEvent);
+
+            memoTxt.onkeyup = function() {
+                if(event.keyCode === 13) {
+                    handleEvent(event);
+                }
+            }
+
+            // 삭제 - 실패
+            // const deleteBtns = {};
+
+            // function deleteTodo(item, index) {
+            //     let variableName = "delete" + item.seq;
+            //     deleteBtns[variableName] = document.getElementById(variableName);
+            // }
+
+            // function deleteTodo2(item) {
+            //     let variableName = "delete" + item.seq;
+            //     deleteBtns[variableName].addEventListener('click', function() {
+            //         todoList = todoList.filter(function(todo) {
+            //             return todo.seq !== item.seq;
+            //         });
+            //         drawList(todoList);
+            //     });
+            // }
+
+            // todoList.forEach(deleteTodo);
+
+            // todoList.forEach(deleteTodo2);
+            
+        }
+    </script>
+</head>
+<body>
+    <h1>Todo List</h1>
+    메모: <input type="text" id="memoTxt" value="안녕 세계"> 
+    <button type="button" id="savekBtn">Save</button>
+    <button type="button" id="resetBtn">Reset</button>
+    <hr>
+    검색: <input type="text" id="searchTxt">
+    <button id="searchBtn">검색</button>
+    <hr>
+    <table width="550" border="1">
+        <thead>
+            <tr>
+                <th>확인</th>
+                <th>할일</th>
+                <th>수정</th>
+                <th>삭제</th>
+            </tr>
+        </thead>
+        <tbody id="demo">
+            
+        </tbody>
+    </table>
+</body>
+</html>

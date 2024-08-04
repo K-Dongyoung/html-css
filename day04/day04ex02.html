@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>계산기</h1>
+    <form action="">
+        <fieldset>
+            <legend>초등 저학년 계산기 (음수 지원 안함)</legend>
+            <input type="text"size="2" value="0" class="hang1">
+            <select id="oper">
+                <option value="+">+</option>
+                <option value="-">-</option>
+                <option value="*">*</option>
+                <option value="/">/</option>
+            </select>
+            <input type="text"size="2" value="0" class="hang2">
+            <button class="resultBtn">=</button>
+            <span class="resultArea">0</span>
+        </fieldset>
+    </form>
+
+    <script>
+        // getElementsByClassName 은 반환값이 리스트(HtmlCollection - 기능이 적음) 형태
+        var hang1 = document.getElementsByClassName("hang1")[0];
+        var hang2 = document.querySelectorAll(".hang2")[0];
+        var resultBtn = document.querySelector(".resultBtn");
+        var resultArea = document.querySelector(".resultArea");
+        var oper = document.getElementById("oper");
+        
+        // 계산기 구현
+        resultBtn.addEventListener("click", function(event) {
+            // preventDefault() : form submit 하면 페이지를 전환하는데 그 작업을 막음.
+            event.preventDefault();
+            var num1 = parseInt(hang1.value);
+            var num2 = parseInt(hang2.value);
+            var operator = oper.value;
+            var result;
+            
+            switch (operator) {
+                case "+":
+                    result = num1 + num2;
+                    break;
+                case "-":
+                    result = num1 - num2;
+                    if (result < 0) {
+                        result *= -1;
+                        hang1.value = num2;
+                        hang2.value = num1;
+                    }
+                    break;
+                case "*":
+                    result = num1 * num2;
+                    break;
+                case "/":
+                    if (num2 === 0) {
+                        alert("0으로 나눌 수 없습니다.");
+                        return;
+                    }
+                    result = num1 / num2;
+                    break;
+                default:
+                    alert("연산자를 선택하세요.");
+                    return;
+            }
+            
+            resultArea.innerHTML = result;      
+            
+            // eval() : eval() 함수는 실행할 JavaScript 문자열을 받아, 이를 JavaScript로 실행합니다.
+            // eval 단점이 많음
+            // resultArea.innerHTML = eval(hang1.value + oper.value + hang2.value);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        div.container {
+            margin: auto;
+            max-width: 800px;
+            min-width: 600px;
+        }
+        .element {
+            border: 2px solid rgba(100, 100, 100, 1);
+            border-radius: 4px;
+            background-color: aliceblue;
+            box-shadow: 0px 0px 5px 1px rgba(0, 0, 0, 0.77);
+            text-shadow: 4px 2px 4px rgba(0, 0, 0, 0.3);
+            padding: 10px 0px;
+            text-align: center;
+        }
+        #saveBtn {
+            width:100px; 
+            height: 30px; 
+            background-color: brown;
+            color: white;
+            border: 0;
+            border-radius: 6px;
+            box-shadow: 1px 1px 2px;
+        }
+        .member-list-table {
+            border: 1px solid black;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .member-list-table tr th {
+            border: 1px solid black;
+        }
+        .member-list-table td {
+            border: 1px solid black;
+            text-align: center;
+        }
+        .comment-table tr td{
+            border-bottom: 1 solid black;
+            border-left: 0 solid black;
+            border-right: 0 solid black;
+            border-top: 0 solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <!-- 제목 -->
+             <h1 class="element">회원 관리 페이지</h1>
+        </div>
+
+        <div>
+            <!-- 입력 폼 -->
+             <form id="memberForm">
+                <table>
+                    <tr>
+                        <th><label for="name">이름</label></th>
+                        <td><input type="text" id="name" name="name" placeholder="성명을 입력 하세요"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="dept">부서</label></th>
+                        <td><input type="text" id="dept" name="dept" placeholder="부서를 입력 하세요"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="position">직책</label></th>
+                        <td><input type="text" id="position" name="position" placeholder="직책을 입력 하세요"></td>
+                    </tr>
+                    <tr>
+                        <th><label for="photo">사진</label></th>
+                        <td><input type="file" id="photo" name="photo"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input type="submit" id="saveBtn" value="save">
+                        </td>
+                    </tr>
+                </table>
+             </form>
+        </div>
+
+        <hr>
+
+        <div class="member-list" >
+            <p>
+                검색
+                <input type="text"> 
+                <button>검색</button>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const memberList = document.querySelector('.member-list');
+
+        function drawTable() {
+            axios.get('http://localhost:3000/')
+                .then((response) => {
+                    const members = response.data;
+                    members.forEach(member => {
+                        createTable(member, memberList);
+                    });
+
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        }
+
+        async function createTable(member, div) {
+            const comments = await loadcomments(member.no);
+            const memberTable = document.createElement('table');
+            memberTable.classList.add('member-list-table');
+            memberTable.setAttribute('id', 'table' + member.no);
+            memberTable.innerHTML = `
+                <tr>
+                    <th><input type="checkbox"></th>
+                    <th>번호</th>
+                    <th>사진</th>
+                    <th>사원명</th>
+                    <th>부서</th>
+                    <th>직급</th>
+                    <th>수정</th>
+                    <th>삭제</th>
+                </tr>
+                <tr>
+                    <td rowspan="${comments.length + 3}"><input type="checkbox"></td>
+                    <td rowspan="${comments.length + 3}">${member.no}</td>
+                    <td><img src="#" alt="사진" style="width: 300px;"></td>
+                    <td>${member.name}</td>
+                    <td>${member.dept}</td>
+                    <td>${member.position}</td>
+                    <td style="display: none;"><input type="text"></td>
+                    <td style="display: none;"><input type="text"></td>
+                    <td style="display: none;"><input type="text"></td>
+                    <td rowspan="${comments.length + 3}"><button onclick="updateMember(this)" data-no="${member.no}">Edit</button></td>
+                    <td rowspan="${comments.length + 3}" style="display: none;"><button>Save</button></td>
+                    <td rowspan="${comments.length + 3}"><button onclick="deleteMember(this)" data-no="${member.no}">Delete</button></td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <table class="comment-table" id="comment-table${member.no}" width="100%" cellspacing="0">
+                            <tr>
+                                <td width="10px">번호</td>
+                                <td>댓글내용</td>
+                                <td>작성자</td>
+                                <td>수정</td>
+                                <td>삭제</td>
+                            </tr>
+                        </table>
+                        <table class="comment-table" width="100%" cellspacing="0">
+                            <tr>
+                                <td colspan="5">
+                                    <form id="commentForm${member.no}">
+                                        댓글 <input type="text" id="content">
+                                        작성자 <input type="text" id="writer">
+                                        <input type="submit" value="댓글입력">
+                                    </form>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>`;
+            div.appendChild(memberTable);
+            
+            // 댓글 추가 EventListener 
+            document.getElementById(`commentForm${member.no}`).addEventListener('submit', (event) => {
+                event.preventDefault();
+                const form = event.target;
+                const memberNo = member.no;
+                const content = form.querySelector("#content").value;
+                const writer = form.querySelector("#writer").value;
+                const newComment = {memberNo, content, writer}
+                axios.post(`http://localhost:3000/comment/${member.no}`, {newComment})
+                .then((response) => {
+                    drawCommentTable(member.no, memberTable, [response.data]);
+                    form.querySelector("#content").value = "";
+                    form.querySelector("#writer").value = "";
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+            })
+            if (comments) {
+                drawCommentTable(member.no, memberTable, comments)
+            }
+        }
+
+        async function loadcomments(no) {
+            const response = await axios.get(`http://localhost:3000/comment/${no}`);
+            return response.data;
+        }
+
+        async function drawCommentTable(no, memberTable, comments) {
+            const commentTable = memberTable.querySelector(`#comment-table${no}`);
+            if (comments.length > 1) {
+                comments.forEach(comment => {
+                    addComment(comment, commentTable);
+                });
+            } else if (comments.length === 1) {
+                addComment(comments[0], commentTable);
+            }
+        }
+
+        function addComment(comment, commentTable) {
+            const commentRow = document.createElement('tr');
+            commentRow.setAttribute('id', `comment${comment.no}`);
+            commentRow.innerHTML = `
+                <td>${comment.no}</td>
+                <td>${comment.content}</td>
+                <td>${comment.writer}</td>
+                <td style="display: none;"><input type="text"></td>
+                <td style="display: none;"><input type="text"></td>
+                <td><button onclick="updateComment(this)" data-commentNo="${comment.no}">Edit</button></td>
+                <td style="display: none;"><button data-memberNo="${comment.memberNo}" >Save</button></td>
+                <td><button onclick="deleteComment(this)" data-commentNo="${comment.no}">Delete</button></td>
+            `;
+            commentTable.appendChild(commentRow);
+        }
+
+        drawTable();
+        
+        // 회원 추가 EventListener
+        document.getElementById('memberForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const newMember = {
+                name: document.getElementById('name').value,
+                dept: document.getElementById('dept').value,
+                position: document.getElementById('position').value
+            }
+            axios.post('http://localhost:3000/', {newMember})
+            .then((response) => {
+                createTable(response.data, memberList);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        });
+
+        // 회원 정보 수정
+        function updateMember(target) {
+            const memberNo = parseInt(target.dataset.no);
+            const tr = target.parentNode.parentNode;
+            
+            const tdName = tr.children[3];
+            const tdDept = tr.children[4];
+            const tdPosition = tr.children[5];
+            const inputName = tr.children[6].firstChild;
+            const inputDept = tr.children[7].firstChild;
+            const inputPosition = tr.children[8].firstChild;
+            const saveBtn = tr.children[10].firstChild;
+
+            inputName.value = tdName.textContent
+            inputDept.value = tdDept.textContent
+            inputPosition.value = tdPosition.textContent
+
+            tdName.setAttribute("style", "display: none;");           
+            tdDept.setAttribute("style", "display: none;");           
+            tdPosition.setAttribute("style", "display: none;");
+            target.parentNode.setAttribute("style", "display: none;");
+            inputName.parentNode.removeAttribute('style');
+            inputDept.parentNode.removeAttribute('style');
+            inputPosition.parentNode.removeAttribute('style');
+            saveBtn.parentNode.removeAttribute('style');
+
+            saveBtn.addEventListener("click", function() {
+                axios({
+                    method: 'put',
+                    url: 'http://localhost:3000/',
+                    data: {
+                        name: inputName.value,
+                        dept: inputDept.value,
+                        position: inputPosition.value,
+                        no: memberNo
+                    }
+                })
+                .then(function(response) {
+                    tdName.innerHTML = response.data.name;
+                    tdDept.innerHTML = response.data.dept;
+                    tdPosition.innerHTML = response.data.position;
+                    inputName.parentNode.setAttribute("style", "display: none;");           
+                    inputDept.parentNode.setAttribute("style", "display: none;");           
+                    inputPosition.parentNode.setAttribute("style", "display: none;");
+                    saveBtn.parentNode.setAttribute("style", "display: none;");
+                    tdName.removeAttribute('style');
+                    tdDept.removeAttribute('style');
+                    tdPosition.removeAttribute('style');
+                    target.parentNode.removeAttribute('style');
+                });
+            });
+        }
+    
+        // 회원 삭제
+        function deleteMember(target) {
+            const memberNo = parseInt(target.dataset.no);
+            axios.delete(`http://localhost:3000/member/${memberNo}`)
+            .then((response) => {
+                const table = document.getElementById(`table${memberNo}`);
+                memberList.removeChild(table);
+             })
+        }
+        
+        // 댓글 수정
+        function updateComment(target) {
+            const commentNo = parseInt(target.dataset.commentno);
+            const tr = target.parentNode.parentNode;
+            const tdContent = tr.children[1];
+            const tdWriter = tr.children[2];
+            const inputContent = tr.children[3].firstChild;
+            const inputWriter = tr.children[4].firstChild;
+            const saveBtn = tr.children[6].firstChild;
+
+            inputContent.value = tdContent.textContent
+            inputWriter.value = tdWriter.textContent
+
+            tdContent.setAttribute("style", "display: none;");           
+            tdWriter.setAttribute("style", "display: none;");
+            target.parentNode.setAttribute("style", "display: none;");
+            inputContent.parentNode.removeAttribute('style');
+            inputWriter.parentNode.removeAttribute('style');
+            saveBtn.parentNode.removeAttribute('style');
+
+            saveBtn.addEventListener("click", function(evenet) {
+                axios({
+                    method: 'put',
+                    url: `http://localhost:3000/comment/${commentNo}`,
+                    data: {
+                        memberNo: parseInt(event.target.dataset.memberno),
+                        content: inputContent.value,
+                        writer: inputWriter.value,
+                        no: commentNo
+                    }
+                })
+                .then(function(response) {
+                    tdContent.innerHTML = response.data.content;
+                    tdWriter.innerHTML = response.data.writer;
+                    inputContent.parentNode.setAttribute("style", "display: none;");           
+                    inputWriter.parentNode.setAttribute("style", "display: none;");
+                    saveBtn.parentNode.setAttribute("style", "display: none;");
+                    tdContent.removeAttribute('style');
+                    tdWriter.removeAttribute('style');
+                    target.parentNode.removeAttribute('style');
+                });
+            });
+        }
+    
+        // 댓글 삭제
+        function deleteComment(target) {
+            const commentNo = parseInt(target.dataset.commentno);
+            axios.delete(`http://localhost:3000/comment/${commentNo}`)
+            .then(function(response) {
+                const commentRow = document.getElementById(`comment${commentNo}`);
+                commentRow.parentNode.removeChild(commentRow);
+            })
+            .catch(function(error) {
+                console.log(error);
+            });
+        }
+    
+    </script>
+</body>
+</html>
